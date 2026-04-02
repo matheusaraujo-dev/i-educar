@@ -1,0 +1,72 @@
+services:
+  # Container de ferramentas e comandos PHP
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        PHP_VERSION: 8.4
+        COMPOSER_VERSION: 2.8
+        HOST_UID: 1000
+        HOST_GID: 1000
+    working_dir: /var/www/ieducar
+    volumes:
+      - app_data:/var/www/ieducar
+    environment:
+      - CACHE_DRIVER=redis
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - DB_HOST=${DB_HOST:-postgres}
+      - PGUSER=${DB_USERNAME}
+      - PGPASSWORD=${DB_PASSWORD}
+    command: tail -f /dev/null
+
+  # PHP-FPM para atender requisições web
+  fpm:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        PHP_VERSION: 8.4
+        COMPOSER_VERSION: 2.8
+        HOST_UID: 1000
+        HOST_GID: 1000
+    working_dir: /var/www/ieducar
+    volumes:
+      - app_data:/var/www/ieducar
+    environment:
+      - CACHE_DRIVER=redis
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - DB_HOST=${DB_HOST:-postgres}
+      - PGPASSWORD=${DB_PASSWORD}
+
+  # Servidor Web Nginx
+  nginx:
+    image: nginx:1.28-alpine
+    depends_on:
+      - fpm
+    working_dir: /var/www/ieducar
+    volumes:
+      - app_data:/var/www/ieducar:ro
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./docker/nginx/snippets:/etc/nginx/snippets/
+    ports:
+      - 80:80
+
+  # Fila do Laravel (Horizon)
+  horizon:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        PHP_VERSION: 8.4
+        COMPOSER_VERSION: 2.8
+        HOST_UID: 1000
+        HOST_GID: 1000
+    working_dir: /var/www/ieducar
+    volumes:
+      - app_data:/var/www/ieducar
+    command: /var/www/ieducar/artisan horizon
+    restart: always
+
+volumes:
+  app_data:
