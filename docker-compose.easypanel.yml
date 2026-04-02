@@ -14,9 +14,11 @@ services:
       - app_data:/var/www/ieducar
     environment:
       - CACHE_DRIVER=redis
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - DB_HOST=${DB_HOST:-postgres}
-      - PGUSER=${DB_USERNAME}
+      - REDIS_HOST=${REDIS_HOST:-i_educar_redis}
+      - DB_HOST=${DB_HOST:-i_educar_postgress}
+      - DB_DATABASE=${DB_DATABASE:-i_educar}
+      - DB_USERNAME=${DB_USERNAME:-i_educar_api}
+      - PGUSER=${DB_USERNAME:-i_educar_api}
       - PGPASSWORD=${DB_PASSWORD}
     command: tail -f /dev/null
 
@@ -35,8 +37,8 @@ services:
       - app_data:/var/www/ieducar
     environment:
       - CACHE_DRIVER=redis
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - DB_HOST=${DB_HOST:-postgres}
+      - REDIS_HOST=${REDIS_HOST:-i_educar_redis}
+      - DB_HOST=${DB_HOST:-i_educar_postgress}
       - PGPASSWORD=${DB_PASSWORD}
 
   # Servidor Web Nginx
@@ -49,8 +51,7 @@ services:
       - app_data:/var/www/ieducar:ro
       - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
       - ./docker/nginx/snippets:/etc/nginx/snippets/
-    ports:
-      - 80:80
+    # Porta removida para evitar conflito com o EasyPanel Proxy
 
   # Fila do Laravel (Horizon)
   horizon:
